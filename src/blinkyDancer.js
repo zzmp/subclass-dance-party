@@ -6,7 +6,7 @@
   BlinkyDancer.prototype = Object.create(Dancer.prototype);
   BlinkyDancer.prototype.constructor = BlinkyDancer;
 
-  var superStep = BlinkyDancer.step;
+  var superStep = BlinkyDancer.prototype.step;
 
   BlinkyDancer.prototype.step  = function() {
     superStep.call(this);
