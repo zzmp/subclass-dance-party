@@ -7,6 +7,7 @@ var Dancer = function( top, left, timeBetweenSteps ) {
 
 Dancer.prototype.step = function() {
   var that = this;
+
   setTimeout( function() {
     that.step.call( that );
   }, this._timeBetweenSteps );
