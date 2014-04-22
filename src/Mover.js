@@ -8,6 +8,7 @@
     Dancer.call( this, top, left, timeBetweenSteps );
     this._speed = speed;
     this._direction = direction;
+    this._timeoutID;
     this.move();
   };
 
@@ -22,11 +23,16 @@
   };
 
   Mover.prototype.move = function() {
+    // calculate new angle from collisions before movement (shift)
+    this.collide( window.dancers );
+    shift.call( this );
+  };
+
+  var shift = function() {
     var that = this;
-    this.collide(window.dancers);
     var shift = calcShift( this._direction, this._speed );
 
-    setTimeout( function() {
+    this._timeoutID = setTimeout( function() {
       that.move.call( that );
     }, 17 );
 
@@ -61,6 +67,7 @@
     var that = this;
     var thatPosition = getPosition( that.$node );
 
+    //  check for collision with window edges
     if ( thatPosition[0] <= 0 ||
       thatPosition[0] >= $( 'body' ).width() - 50 ) {
       that._direction = Math.PI - that._direction;
@@ -72,14 +79,22 @@
       that._direction = ( 2 * Math.PI ) - that._direction;
     }
 
-    // _.each( dancers, function( dancer ) {
-    //   if ( that === dancer ) {
-    //     return;
-    //   }
-    //   if ( calcDistance( that, dancer ) < 40 ) {
-    //     that._direction = calcReflectedAngle( that._direction, dancer._direction );
-    //   }
-    //});
+    _.each( dancers, function( dancer ) {
+      if ( dancer === that ) {
+        return;
+      }
+
+      if ( calcDistance( that, dancer ) <= 100 ) {
+        reflect.call( that, dancer );
+        clearTimeout( dancer._timeoutID );
+        shift.call( dancer );
+      }
+    });
+  };
+
+  var reflect = function( dancer ) {
+    this._speed += 5;
+    dancer._speed += 5;
   };
 
   var calcReflectedAngle = function( one, two ) {

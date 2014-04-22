@@ -4,6 +4,18 @@ $(document).ready(function(){
 
   window.dancers = [];
 
+  $('body').on( 'mousemove', function(e) {
+    _.each( dancers, function(dancer) {
+      if ( dancer instanceof Follower ) {
+        dancer.trackMouse(e);
+      }
+    });
+  });
+
+    // this.$node.on( 'mousemove', function(e) {
+    //   trackMouse.call( that, e);
+    // });
+
   $(".addDancerButton").on("click", function(event){
     /* This function sets up the click handlers for the create-dancer
      * buttons on index.html. You should only need to make one small change to it.
