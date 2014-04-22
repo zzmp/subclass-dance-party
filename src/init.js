@@ -1,4 +1,7 @@
 $(document).ready(function(){
+
+  $('body').css('overflow','hidden');
+
   window.dancers = [];
 
   $(".addDancerButton").on("click", function(event){
@@ -27,7 +30,8 @@ $(document).ready(function(){
       $("body").width() * Math.random(),
       Math.random() * 1000,
       Math.random() * 2 * Math.PI,
-      Math.random() * 3
+      Math.random() * 3,
+      Math.random() * 125
     );
     $('body').append(dancer.$node);
   });
