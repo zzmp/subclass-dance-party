@@ -8,6 +8,7 @@
     Dancer.call( this, top, left, timeBetweenSteps );
     this._speed = speed;
     this._direction = direction;
+    this._diameter = 25;
     this._timeoutID;
     this.move();
   };
@@ -22,22 +23,22 @@
     return shift;
   };
 
-  Mover.prototype.move = function() {
-    // calculate new angle from collisions before movement (shift)
-    this.collide( window.dancers );
-    shift.call( this );
-  };
-
   var shift = function() {
     var that = this;
     var shift = calcShift( this._direction, this._speed );
 
     this._timeoutID = setTimeout( function() {
       that.move.call( that );
-    }, 17 );
+    }, 10 );
 
     this.$node.css( 'left', '+=' + shift[0] );
     this.$node.css( 'top', '+=' + shift[1] );
+  };
+
+  Mover.prototype.move = function() {
+    // calculate new angle from collisions before movement (shift)
+    this.collide( window.dancers );
+    shift.call( this );
   };
 
   var getPosition = function( $node ) {
@@ -68,15 +69,29 @@
     var thatPosition = getPosition( that.$node );
 
     //  check for collision with window edges
-    if ( thatPosition[0] <= 0 ||
-      thatPosition[0] >= $( 'body' ).width() - 50 ) {
-      that._direction = Math.PI - that._direction;
-      if ( that._direction < 0 ) {
-        that._direction = ( 2 * Math.PI ) + that._direction;
+    if ( ( thatPosition[0] <= 0 &&
+           that._direction >= Math.PI / 2 &&
+           that._direction <= Math.PI * 3 / 2 ) ||
+         ( thatPosition[0] >= $( 'body' ).width() - 25 &&
+           ( that._direction <= Math.PI / 2 ||
+             that._direction >= Math.PI * 3 / 2 )
+         )
+       ) {
+      that._direction = that._direction + Math.PI;
+      if ( that._direction > 2 * Math.PI ) {
+        that._direction = that._direction - 2 * Math.PI;
       }
-    } else if ( thatPosition[1] <= 0 ||
-      thatPosition[1] >= $( 'body' ).height() - 50 ) {
-      that._direction = ( 2 * Math.PI ) - that._direction;
+    }
+    if ( ( thatPosition[1] <= 0 &&
+           that._direction >= Math.PI ) ||
+         ( thatPosition[1] >= $( 'body' ).height() - 25 &&
+           that._direction <= Math.PI
+         )
+       ) {
+      that._direction = that._direction + Math.PI;
+      if ( that._direction > 2 * Math.PI ) {
+        that._direction = that._direction - 2 * Math.PI;
+      }
     }
 
     _.each( dancers, function( dancer ) {
@@ -84,30 +99,52 @@
         return;
       }
 
-      if ( calcDistance( that, dancer ) <= 100 ) {
-        reflect.call( that, dancer );
-        clearTimeout( dancer._timeoutID );
-        shift.call( dancer );
+      if ( calcDistance( that, dancer ) <= that._diameter ) {
+        if ( dot.call( that, dancer ) > 0 ) {
+          reflect.call( that, dancer );
+        }
+
+
       }
     });
   };
 
-  var reflect = function( dancer ) {
-    this._speed += 5;
-    dancer._speed += 5;
+  var dot = function( dancer ) {
+    var vectorDiff = [];
+    var radialDiff;
+
+    vectorDiff.push( +dancer.$node.css( 'left' ).slice( 0, -2 ) -
+                     +this.$node.css( 'left' ).slice( 0, -2 ) );
+    vectorDiff.push( +dancer.$node.css( 'top' ).slice( 0, -2 ) -
+                     +this.$node.css( 'top' ).slice( 0, -2 ) );
+    radialDiff = Math.atan( vectorDiff[1], vectorDiff[0] );
+
+    return Math.cos( this._direction - radialDiff );
   };
 
-  var calcReflectedAngle = function( one, two ) {
-    // calculate reflected angle based on given angles (radians)
-    var planeOfDeflection = one + ( (one + two) / 2 );
-    var angleOfReflection = one - planeOfDeflection;
-    angleOfReflection = 2 * Math.PI - angleOfReflection;
-    angleOfReflection = planeOfDeflection + angleOfReflection;
-    if ( angleOfReflection > 2 * Math.PI ) {
-      angleOfReflection = angleOfReflection - 2 * Math.PI;
+  var reflect = function( dancer ) {
+    var a = this._direction;
+    var b = dancer._direction;
+    var lineOfSymmetry = a + ( ( a - b ) / 2 );
+
+    a = lineOfSymmetry + Math.PI / 2;
+    b = lineOfSymmetry - Math.PI / 2;
+
+    // ensure they are between 0 and 2 * PI
+    if ( a >= 2 * Math.PI ) {
+      a -= 2 * Math.PI;
+    } else if ( a < 0 ) {
+      a += 2 * Math.PI;
     }
 
-    return angleOfReflection;
+    if ( b >= 2 * Math.PI ) {
+      b -= 2 * Math.PI;
+    } else if ( b < 0 ) {
+      b += 2 * Math.PI;
+    }
+
+    this._direction = a;
+    dancer._direction = b;
   };
 
   this.Mover = Mover;
